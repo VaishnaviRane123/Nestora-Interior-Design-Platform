@@ -1,0 +1,11 @@
+{
+  "users": [
+    {"name":"Demo Customer","email":"customer@nestora.demo","role":"CUSTOMER"},
+    {"name":"Admin User","email":"admin@nestora.demo","role":"ADMIN"}
+  ],
+  "designers": [
+    {"name":"Studio Terra","city":"Pune","specialty":"Modern residential","verified":true},
+    {"name":"Moss & Form","city":"Pune","specialty":"Minimal interiors","verified":true},
+    {"name":"Atelier 27","city":"Mumbai","specialty":"Luxury residential","verified":true}
+  ]
+}

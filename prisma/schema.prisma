@@ -1,0 +1,501 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Prisma 7: URL lives in prisma.config.ts, not here.
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum Role {
+  CUSTOMER
+  DESIGNER
+  ADMIN
+}
+
+enum PropertyType {
+  BHK_1
+  BHK_2
+  BHK_3
+  VILLA
+}
+
+enum ProjectKind {
+  NEW
+  RENOVATION
+}
+
+enum OptionType {
+  FURNITURE
+  COLOR
+  MATERIAL
+  ADDON
+  FINISH
+}
+
+enum DesignStatus {
+  DRAFT
+  PENDING
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  ARCHIVED
+}
+
+enum DesignerApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum BookingStatus {
+  REQUESTED
+  DESIGNER_ACCEPTED
+  SITE_VISIT_SCHEDULED
+  SITE_VISIT_DONE
+  QUOTED
+  QUOTATION_SENT
+  QUOTATION_ACCEPTED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// ─────────────────────────────────────────────
+// Auth / users
+// ─────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  phone         String?
+  passwordHash  String?
+  role          Role      @default(CUSTOMER)
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  customer            Customer?
+  designer            Designer?
+  designerApplication DesignerApplication?
+
+  accounts  Account[]
+  sessions  Session[]
+  boards    Board[]
+  favorites Favorite[]
+  reviews   Review[]
+
+  @@index([role])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─────────────────────────────────────────────
+// Customer / Designer profiles
+// ─────────────────────────────────────────────
+
+model Customer {
+  id           String       @id @default(cuid())
+  userId       String       @unique
+  city         String?
+  propertyType PropertyType?
+  projectKind  ProjectKind?
+  budgetMin    Int?
+  budgetMax    Int?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+}
+
+model Designer {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  studioName   String
+  city         String
+  specialty    String?
+  experienceYr Int?
+  verified     Boolean  @default(false)
+  bio          String?  @db.Text
+  avatarUrl    String?
+  coverUrl     String?
+  ratingAvg    Float?
+  ratingCount  Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  designs  Design[]
+  bookings Booking[]
+  reviews  Review[]
+  consultations ConsultationRequest[]
+
+  @@index([city])
+  @@index([verified])
+}
+
+model DesignerApplication {
+  id           String                    @id @default(cuid())
+  applicantId  String                    @unique
+  studioName   String
+  city         String
+  specialty    String?
+  experienceYr Int?
+  bio          String?                   @db.Text
+  status       DesignerApplicationStatus @default(PENDING)
+  reviewedAt   DateTime?
+  reviewNote   String?                   @db.Text
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+
+  applicant User @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+}
+
+// ─────────────────────────────────────────────
+// Design catalogue
+// ─────────────────────────────────────────────
+
+model Design {
+  id            String       @id @default(cuid())
+  slug          String       @unique
+  title         String
+  designerId    String
+  category      String
+  style         String
+  propertyType  PropertyType
+  projectKind   ProjectKind  @default(NEW)
+  areaSqftMin   Int
+  areaSqftMax   Int
+  basePrice     Int
+  timelineDays  Int          @default(30)
+  status        DesignStatus @default(APPROVED)
+
+  description   String       @db.Text
+  imageUrl      String?
+
+  inclusions    String[]
+  materials     String[]
+  colors        String[]
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  designer Designer       @relation(fields: [designerId], references: [id], onDelete: Cascade)
+  options  DesignOption[]
+  bookings Booking[]
+  images   DesignImage[]
+  swatches DesignColor[]
+  finishes DesignMaterial[]
+  boards   BoardItem[]
+  favorites Favorite[]
+
+  @@index([designerId])
+  @@index([status])
+  @@index([propertyType])
+}
+
+model DesignOption {
+  id         String     @id @default(cuid())
+  designId   String
+  type       OptionType
+  name       String
+  priceDelta Int        @default(0)
+  isDefault  Boolean    @default(false)
+  sortOrder  Int        @default(0)
+  createdAt  DateTime   @default(now())
+
+  design Design @relation(fields: [designId], references: [id], onDelete: Cascade)
+
+  @@index([designId])
+}
+
+model DesignImage {
+  id         String   @id @default(cuid())
+  designId   String
+  imageUrl   String
+  alt        String?
+  caption    String?
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  design Design @relation(fields: [designId], references: [id], onDelete: Cascade)
+
+  @@index([designId])
+}
+
+model DesignColor {
+  id        String   @id @default(cuid())
+  designId  String
+  name      String
+  hex       String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  design Design @relation(fields: [designId], references: [id], onDelete: Cascade)
+
+  @@index([designId])
+}
+
+model DesignMaterial {
+  id        String   @id @default(cuid())
+  designId  String
+  name      String
+  imageUrl  String?
+  notes     String?  @db.Text
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  design Design @relation(fields: [designId], references: [id], onDelete: Cascade)
+
+  @@index([designId])
+}
+
+// ─────────────────────────────────────────────
+// Boards & favourites
+// ─────────────────────────────────────────────
+
+model Board {
+  id        String      @id @default(cuid())
+  userId    String
+  name      String
+  isPublic  Boolean     @default(false)
+  shareSlug String      @unique @default(cuid())
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items BoardItem[]
+
+  @@index([userId])
+}
+
+model BoardItem {
+  id        String   @id @default(cuid())
+  boardId   String
+  designId  String
+  note      String?
+  createdAt DateTime @default(now())
+
+  board  Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  design Design @relation(fields: [designId], references: [id], onDelete: Cascade)
+
+  @@unique([boardId, designId])
+  @@index([boardId])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  designId  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  design Design @relation(fields: [designId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, designId])
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────
+// Bookings
+// ─────────────────────────────────────────────
+
+model Booking {
+  id           String        @id @default(cuid())
+  reference    String        @unique @default(cuid())
+  customerId   String
+  designerId   String
+  designId     String
+  status       BookingStatus @default(REQUESTED)
+
+  propertyType PropertyType?
+  city         String?
+  preferredAt  DateTime?
+  budgetBand   String?
+  notes        String?       @db.Text
+
+  quotedPrice  Int?
+  scheduledAt  DateTime?
+  completedAt  DateTime?
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  customer Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  designer Designer       @relation(fields: [designerId], references: [id], onDelete: Cascade)
+  design   Design         @relation(fields: [designId], references: [id], onDelete: Cascade)
+  events   BookingEvent[]
+
+  @@index([customerId])
+  @@index([designerId])
+  @@index([status])
+}
+
+model BookingEvent {
+  id         String         @id @default(cuid())
+  bookingId  String
+  fromStatus BookingStatus?
+  toStatus   BookingStatus
+  note       String?        @db.Text
+  createdAt  DateTime       @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+}
+
+// ─────────────────────────────────────────────
+// Reviews
+// ─────────────────────────────────────────────
+
+model Review {
+  id         String   @id @default(cuid())
+  designerId String
+  userId     String
+  rating     Int
+  title      String?
+  body       String?  @db.Text
+  published  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  designer Designer @relation(fields: [designerId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([designerId, published])
+}
+
+// ─────────────────────────────────────────────
+// Budget estimator
+// ─────────────────────────────────────────────
+
+model City {
+  id        String     @id @default(cuid())
+  slug      String     @unique
+  name      String     @unique
+  tier      Int
+  estimates Estimate[]
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([tier])
+}
+
+model Estimate {
+  id         String       @id @default(cuid())
+  cityId     String
+  city       City         @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  propertyType PropertyType
+  scope        String
+  styleTier    String
+
+  furnitureMin    Int
+  furnitureMax    Int
+  materialsMin    Int
+  materialsMax    Int
+  labourMin       Int
+  labourMax       Int
+  installationMin Int
+  installationMax Int
+
+  inclusions String[]
+  exclusions String[]
+  notes      String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cityId, propertyType, scope, styleTier])
+  @@index([cityId])
+  @@index([scope])
+}
+
+// ─────────────────────────────────────────────
+// Consultation requests (customer → admin → designer)
+// ─────────────────────────────────────────────
+
+enum ConsultationStatus {
+  NEW
+  ASSIGNED
+  DECLINED
+  SPAM
+}
+
+model ConsultationRequest {
+  id           String             @id @default(cuid())
+  reference    String             @unique @default(cuid())
+  status       ConsultationStatus @default(NEW)
+
+  // Who's asking
+  name         String
+  phone        String
+  email        String?
+  city         String
+
+  // What they want
+  designerId   String?            // preferred designer (nullable — admin can reassign)
+  designer     Designer?          @relation(fields: [designerId], references: [id], onDelete: SetNull)
+
+  propertyType PropertyType?
+  roomType     String?
+  budgetBand   String?
+  notes        String?            @db.Text
+
+  // Admin review
+  reviewedBy   String?            // admin userId
+  reviewedAt   DateTime?
+  reviewNote   String?            @db.Text
+  assignedTo   String?            // resulting booking id, if converted
+
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([status, createdAt])
+  @@index([designerId])
+}

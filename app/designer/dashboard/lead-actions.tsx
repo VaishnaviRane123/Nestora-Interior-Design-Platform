@@ -1,0 +1,7 @@
+'use client';
+import { useState } from 'react';
+export default function LeadActions({ bookingId, status }: { bookingId: string; status: string }) {
+ const [busy, setBusy] = useState(false); const [message, setMessage] = useState('');
+ async function act(action: 'accept'|'reject'|'quote') { let body: {action:string;quotedPrice?:number;note?:string} = {action}; if(action==='quote'){ const raw=window.prompt('Enter quotation amount in INR'); if(raw===null)return; const price=Number(raw); if(!Number.isSafeInteger(price)||price<=0){setMessage('Enter a valid whole-rupee amount.');return;} body.quotedPrice=price; } if(action==='reject')body.note=window.prompt('Reason (optional)')||'Declined by designer'; setBusy(true);setMessage(''); const response=await fetch(`/api/designer/bookings/${bookingId}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); const data: {error?:string}=await response.json().catch(()=>({}));setBusy(false);if(!response.ok){setMessage(data.error||'Action failed.');return;}window.location.reload(); }
+ return <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:10}}>{status==='REQUESTED'&&<><button className="btn btn-dark" disabled={busy} onClick={()=>act('accept')}>Accept lead</button><button className="btn btn-light" disabled={busy} onClick={()=>act('reject')}>Decline</button></>}{['DESIGNER_ACCEPTED','SITE_VISIT_DONE','QUOTED'].includes(status)&&<button className="btn btn-dark" disabled={busy} onClick={()=>act('quote')}>Send quotation</button>}{message&&<p role="alert">{message}</p>}</div>;
+}
