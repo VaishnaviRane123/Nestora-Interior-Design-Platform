@@ -117,5 +117,5 @@ components/            Shared UI components
 lib/                   Authentication, Prisma, and application helpers
 prisma/                Prisma schema and seed scripts
 public/images/         Local interior and material images
-docs/screenshots/      UI screenshots embedded in this README
+screenshots/      UI screenshots embedded in this README
 ```
