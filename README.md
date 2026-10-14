@@ -12,7 +12,7 @@ Nestora is a web platform concept for discovering interior design inspiration, e
 
 ### Designers — browse professional profiles
 
-![Nestora designers page](screenshots/designers.png)
+![Nestora designers page](screenshots/designers.jpeg)
 
 ### Ask Nestora — catalogue-guided planning
 
