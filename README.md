@@ -1,48 +1,121 @@
-# Nestora — Interior Design Discovery & Booking
+# Nestora — Interior Design Discovery & Booking Platform
 
-Nestora is a Next.js 14 + TypeScript + Prisma/PostgreSQL application for discovering interior concepts, browsing designers, requesting bookings, and estimating project budgets for Indian homes. The visual direction is warm, editorial and material-led.
+Nestora is a web platform concept for discovering interior design inspiration, exploring designer portfolios, saving ideas, requesting consultations, and estimating home-interior budgets. It uses a warm, editorial visual style inspired by natural materials and contemporary Indian homes.
+
+> **Project status:** This is a development/demo project. Review the setup and verification notes below before deploying it publicly. The Ask Nestora page shown in the screenshots is a catalogue-grounded scaffold, not a fully integrated generative-AI assistant.
+
+## Screenshots
+
+### Home — discover interior designs
+![Nestora homepage](docs/screenshots/homepage.png)
+
+### Designers — browse professional profiles
+![Nestora designers page](docs/screenshots/designers.png)
+
+### Ask Nestora — catalogue-guided planning
+![Ask Nestora page](docs/screenshots/ask-nestora.png)
+
+### Budget estimator
+![Nestora budget estimator](docs/screenshots/budget-estimator.png)
+
+### Customer dashboard
+![Nestora customer dashboard](docs/screenshots/customer-dashboard.png)
+
+Screenshots are from the local development interface and may show demo data or incomplete areas. They are included to document the current UI, not to claim production readiness.
+
+## Main features
+
+- Browse interior design concepts and styles
+- View designer profiles and portfolios
+- Save favourite designs and organize inspiration boards
+- Request bookings and consultations
+- Estimate project budgets using city, home type, scope, and finish level
+- Customer dashboard for personal projects and booking information
+- Admin workspace for managing catalogue and incoming requests (depending on configured database/schema)
+- Local image assets in `public/images/`
+
+## Tech stack
+
+- Next.js App Router and React
+- TypeScript
+- Auth.js credentials authentication
+- Prisma ORM 7
+- PostgreSQL
+- CSS and Tailwind/shadcn-based UI components where used in the project
 
 ## Requirements
 
-- Node.js 20 LTS or newer (check the installed Prisma 7 package's engine requirements for your platform)
-- PostgreSQL 14+ (local, Neon or Supabase)
+- Node.js 22 LTS recommended for the current local setup
 - npm
+- PostgreSQL database (local or hosted)
 
-## Clean setup (PowerShell)
+## Setup on Windows (PowerShell)
 
-```powershell
-Copy-Item .env.example .env
-# Edit .env and set DATABASE_URL and a strong AUTH_SECRET
-npm install
-npx prisma generate
-npx prisma db push
-npm run db:seed
-npm run dev
-```
+1. Clone the repository or open the project folder.
+2. Create your local environment file:
 
-Open http://localhost:3000. Do not commit `.env`; use a separate development database for seed data. Demo credentials from the seed script are for local development only and must not be enabled in a public deployment.
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+3. Edit `.env` and set your PostgreSQL `DATABASE_URL` and a strong `AUTH_SECRET`. Never commit `.env`.
+4. Install packages and generate Prisma Client:
+
+   ```powershell
+   npm install
+   npx prisma generate
+   ```
+
+5. Apply the database schema. If the project has migrations, inspect status first:
+
+   ```powershell
+   npx prisma migrate status
+   ```
+
+   Apply migrations only after reviewing the output. If this development project is intentionally using schema push instead of migrations, use `npx prisma db push` against a development database.
+
+6. Seed sample data if configured:
+
+   ```powershell
+   npm run db:seed
+   ```
+
+7. Start the app:
+
+   ```powershell
+   npm run dev
+   ```
+
+8. Open [http://localhost:3000](http://localhost:3000).
 
 ## Environment variables
 
-- `DATABASE_URL`: PostgreSQL connection string
-- `AUTH_SECRET`: random secret used to sign Auth.js sessions
-- `AUTH_TRUST_HOST`: set to `true` for local deployments behind a trusted host
-- `AUTH_URL`: local or deployed application URL
-- `NEXT_PUBLIC_APP_NAME`: public product name
+See `.env.example` for the variable names expected by this project. Typical values include:
 
-## Available commands
+- `DATABASE_URL` — PostgreSQL connection string
+- `AUTH_SECRET` — secret for signing authentication tokens/sessions
+- `AUTH_TRUST_HOST` — host trust setting if required by Auth.js
+- `AUTH_URL` — local or deployed application URL, if required by the configured auth setup
+- `NEXT_PUBLIC_APP_NAME` — public application name
 
-- `npm run dev` — development server
-- `npm run typecheck` — TypeScript check
-- `npm run build` — production build
-- `npm run db:seed` — idempotent sample-data seeding
+Use your own credentials and a separate development database for sample data. Do not put real secrets in `.env.example`.
 
-## Local imagery
+## Useful commands
 
-The current starter assets live in `public/images/`; application pages reference local `/images/...` paths so they do not require a third-party image host at runtime. Some starter assets are crops from the provided design-reference screenshots and should be replaced with properly licensed, full-resolution interior photography before public launch.
+```powershell
+npm run dev        # Start development server
+npm run typecheck  # TypeScript check, if configured
+npm run build      # Production build
+npm run db:seed    # Add sample data, if configured
+```
 
-## Implementation / verification status
+## Repository structure
 
-This archive includes the existing discovery, booking, estimator, customer dashboard and Auth.js foundation, plus local starter imagery, Nestora's inline SVG wordmark, persistent favorites and board data models, board API endpoints, public shared-board page, designer lead-list page and an honest catalogue/estimate assistant scaffold.
-
-This is **not yet a verified production release**. In particular, a fresh dependency installation, generated Prisma client, full TypeScript/build run, browser end-to-end tests, and security review must be completed in an environment with npm registry access and a working PostgreSQL database. `package-lock.json` is not included because dependencies could not be resolved in the restricted build environment; generate it with `npm install` and commit it before deployment. The `/ask` route is a Phase 4 scaffold, not a real LLM/RAG integration.
+```text
+app/                  Next.js pages and API routes
+components/            Shared UI components
+lib/                   Authentication, Prisma, and application helpers
+prisma/                Prisma schema and seed scripts
+public/images/         Local interior and material images
+docs/screenshots/      UI screenshots embedded in this README
+```
