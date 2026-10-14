@@ -7,19 +7,19 @@ Nestora is a web platform concept for discovering interior design inspiration, e
 ## Screenshots
 
 ### Home — discover interior designs
-![Nestora homepage](docs/screenshots/homepage.png)
+![Nestora homepage](screenshots/homepage.png)
 
 ### Designers — browse professional profiles
-![Nestora designers page](docs/screenshots/designers.png)
+![Nestora designers page](screenshots/designers.png)
 
 ### Ask Nestora — catalogue-guided planning
-![Ask Nestora page](docs/screenshots/ask-nestora.png)
+![Ask Nestora page](screenshots/ask-nestora.png)
 
 ### Budget estimator
-![Nestora budget estimator](docs/screenshots/budget-estimator.png)
+![Nestora budget estimator](screenshots/budget-estimator.png)
 
 ### Customer dashboard
-![Nestora customer dashboard](docs/screenshots/customer-dashboard.png)
+![Nestora customer dashboard](screenshots/customer-dashboard.png)
 
 Screenshots are from the local development interface and may show demo data or incomplete areas. They are included to document the current UI, not to claim production readiness.
 
